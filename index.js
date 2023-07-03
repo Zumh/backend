@@ -105,6 +105,7 @@ app.post('/api/notes', (request, response) => {
 	notes = notes.cocat(note);
 
 	response.json(body);
+	console.log(response);
 })
 
 
