@@ -1,6 +1,11 @@
+// important that dotenv gets imported before the note model is imported
+// environment variables from .env file are available globally before the code fro the other modules is imported
+require('dotenv').config();
 const express =  require('express');
 const app = express();
 const cors = require('cors');
+// importing module by using this 
+const Note = require('./models/note');
 
 app.use(cors());
 app.use(express.json());
@@ -23,6 +28,38 @@ let notes  = [
     important: true
   }
 ]
+
+// This is for mongoose 
+/*
+// mongoose is added 
+const mongoose = require('mongoose')
+const password = process.argv[2];
+// DO NOT SAVE YOUR PASSWORD TO GITHUB!!
+const url = `mongodb+srv://fullstack2023:${password}@cluster0.8vki2oh.mongodb.net/noteApp?retryWrites=true&w=majority`;
+
+mongoose.set('strictQuery',false)
+mongoose.connect(url)
+
+const noteSchema = new mongoose.Schema({
+  content: String,
+  important: Boolean,
+})
+const Note = mongoose.model('Note', noteSchema);
+
+// delete all the version number and clone id
+// convert them to to string first for safety
+//
+noteSchema.set('toJSON', {
+  transform: (document, returnedObject) => {
+    returnedObject.id = returnedObject._id.toString()
+    delete returnedObject._id
+    delete returnedObject.__v
+  }
+})
+
+*/
+
+
 /*
  * The event handler function accepts two parameters. The first request parameter contains all of the information of the HTTP request, and the second response parameter is used to define how the request is responded to.
 
@@ -31,25 +68,56 @@ app.get('/', (request, response) => {
 	response.send('<h1>Hello World!</h1>');
 });
 
-// // http get requests for all notes
+
+// this will handle mongo db and we get data from database 
 app.get('/api/notes', (request, response) => {
+  Note.find({}).then(notes => {
+    	//console.log(notes);
+	response.json(notes)
+  })
+});
+
+
+
+// // http get requests for all notes
+/*app.get('/api/notes', (request, response) => {
   response.json(notes)
 })
-
+*/
 
 // Receiving data 
 // express.json parse data into json format
 // then we allow app.use to turn it into object.
-
+/*
 app.post('/api/notes', (request, response) => {
   
   const body = request.body;
   console.log(body);
   response.json(body);
 })
+*/
 
+// Receiving data and accessing from database route handlers
+app.post('/api/notes', (request, response) => {
+	const body = request.body;
+	if ( body.content === undefined) {
+		return response.status(400).json({ error: 'content missing' });
+	}
+
+	const note = new Note({
+		content: body.content, 
+		important: body.important || false,
+	})
+
+	note.save().then(savedNote => {
+		response.json(savedNote);
+	})
+
+});
+
+// this is for fetching data from local notes from same server in render
 // http get requests for individual note
-app.get('/api/notes/:id', (request, response) => {
+/*app.get('/api/notes/:id', (request, response) => {
 	const id = Number(request.params.id);
 	// note.id === id mean matching only with same type of data
 	// find that note
@@ -62,7 +130,12 @@ app.get('/api/notes/:id', (request, response) => {
 		// otherwise we send the error code to client.
 		response.status(404).end();
 	}
-})
+})*/
+app.get('/api/notes/:id', (request, response) => {
+	Note.findById(request.params.id).then(note => {
+		response.json(note);
+	});
+});
 
 // we can delete individual note by manual requesting
 app.delete('/api/notes/:id', (request, response) => {
@@ -110,11 +183,16 @@ app.post('/api/notes', (request, response) => {
 
 
 //const PORT = 3001 ; 
-const PORT  = process.env.PORT || 3001;
+/*const PORT  = process.env.PORT || 3001;
 app.listen(PORT, () => {
 	console.log(`Server running on port ${PORT}`);
 });
+*/
 
+const PORT = process.env.PORT;
+app.listen(PORT, () => {
+	console.log(`Server running on port ${PORT}`);
+});
 
 
 
