@@ -13,6 +13,10 @@ const requestLogger = (request, response, next) => {
   next()
 }
 
+const unknownEndpoint = (request, response) => {
+  response.status(404).send({ error: 'unknown endpoint' })
+}
+
 const errorHandler = (error, request, response, next) => {
   console.error(error.message)
 
@@ -21,11 +25,8 @@ const errorHandler = (error, request, response, next) => {
   } else if (error.name === 'ValidationError') {
     return response.status(400).json({ error: error.message })
   }
-  next(error)
-}
 
-const unknownEndpoint = (request, response) => {
-  response.status(404).send({ error: 'unknown endpoint' })
+  next(error)
 }
 
 app.use(cors())
@@ -33,36 +34,28 @@ app.use(express.json())
 app.use(requestLogger)
 app.use(express.static('build'))
 
-
 app.get('/api/notes', (request, response) => {
   Note.find({}).then(notes => {
     response.json(notes)
   })
 })
 
-// we check if empty input is provided by the user and response with proper error message
-// if any of the contrains is not working then it will trigger the error message
 app.post('/api/notes', (request, response, next) => {
   const body = request.body
-  /*
-  if (body.content === undefined) {
-    return response.status(400).json({ error: 'content missing' })
-  }
-*/
+
   const note = new Note({
     content: body.content,
     important: body.important || false,
     date: new Date(),
   })
 
-  note.save().then(savedNote => {
-    response.json(savedNote)
-  })
+  note.save()
+    .then(savedNote => {
+      response.json(savedNote)
+    })
     .catch(error => next(error))
-
 })
 
-// this is a get request for simply just finding user info with their id value
 app.get('/api/notes/:id', (request, response, next) => {
   Note.findById(request.params.id)
     .then(note => {
@@ -83,13 +76,14 @@ app.delete('/api/notes/:id', (request, response, next) => {
     .catch(error => next(error))
 })
 
-// update for Notes and in the database
 app.put('/api/notes/:id', (request, response, next) => {
   const { content, important } = request.body
 
   Note.findByIdAndUpdate(
     request.params.id,
-    { content, important } , { new: true, runValidators: true, context: 'query' })
+    { content, important },
+    { new: true, runValidators: true, context: 'query' }
+  )
     .then(updatedNote => {
       response.json(updatedNote)
     })
