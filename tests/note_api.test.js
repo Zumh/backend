@@ -11,15 +11,41 @@ const Note = require('../models/note')
 
 
 
+// nested multiple async can be a mess and beforEach doesn't wait for nested wait
+// we can use Promise.all for this issue
+// Promise.all will wait until all the datas are saved in the database
+
+/*
+// Promise.all executes the promises it recieves in parallel and no order.
+beforeEach(async () => {
+  await Note.deleteMany({})
+
+  const noteObjects = helper.initialNotes
+    .map(note => new Note(note))
+  const promiseArray = noteObjects.map(note => note.save())
+  await Promise.all(promiseArray)
+})
+*/
+/*
+// store all the data in order
+beforeEach(async () => {
+  await Note.deleteMany({})
+
+  for (let note of helper.initialNotes) {
+    let noteObject = new Note(note)
+    await noteObject.save()
+  }
+})
+*/
 
 beforeEach(async () => {
-  await Note.deleteMany({}) // clear the data
-  let noteObject = new Note(helper.initialNotes[0]) // create a new object
-  await noteObject.save() // then save it to database
-  noteObject = new Note(helper.initialNotes[1])
-  await noteObject.save()
-})
+  await Note.deleteMany({})
+  await Note.insertMany(helper.initialNotes)
 
+  /**
+
+     */
+})
 
 //fetching an individual note
 test('a specific note can be viewed', async () => {

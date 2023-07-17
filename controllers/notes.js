@@ -18,20 +18,22 @@ notesRouter.get('/', async (request, response) => {
 })
 
 // finding a note using id
-notesRouter.get('/:id', (request, response, next) => {
-  Note.findById(request.params.id)
-    .then(note => {
-      if (note) {
-        response.json(note)
-      } else {
-        response.status(404).end()
-      }
-    })
-    .catch(error => next(error))
+notesRouter.get('/:id',  async (request, response) => {
+
+  const note = await Note.findById(request.params.id)
+  if(note){
+    // if that single note do exist then response
+    response.json(note)
+  } else {
+    // other wise just return 404 status code
+    response.status(404).end()
+  }
+
+
 })
 
 // saving data to mongo database
-notesRouter.post('/', async (request, response, next) => {
+notesRouter.post('/', async (request, response) => {
   const body = request.body
 
   const note = new Note({
@@ -39,28 +41,22 @@ notesRouter.post('/', async (request, response, next) => {
     important: body.important || false,
 
   })
-  try {
-    // note.save()
-    //   .then(savedNote => {
-    //     // we return 201 status for crating status code
-    //     response.status(201).json(savedNote)
-    //   })
-    //   .catch(error => next(error))
-    const savedNote = await note.save()
-    response.status(201).json(savedNote)
-  } catch (exception){
-    next(exception)
-    /* The catch block simply calls the next function, which passes the request handling to the error handling middleware.*/
-  }
+
+
+  const savedNote = await note.save()
+  response.status(201).json(savedNote)
+
 })
 
 // delete specific note by finding with id
-notesRouter.delete('/:id', (request, response, next) => {
-  Note.findByIdAndRemove(request.params.id)
-    .then(() => {
-      response.status(204).end()
-    })
-    .catch(error => next(error))
+notesRouter.delete('/:id', async (request, response) => {
+
+  // Because of the library, we do not need the next(exception) call anymore.
+  // The library handles everything under the hood. If an exception occurs in an async route,
+  // the execution is automatically passed to the error handling middleware.
+  await Note.findByIdAndRemove(request.params.id)
+  response.status(204).end()
+
 })
 
 // find the note using id and update info
