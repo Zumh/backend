@@ -8,10 +8,13 @@ const notesRouter = require('express').Router()
 const Note = require('../models/note')
 
 // get all the notes and response them to the frontend
-notesRouter.get('/', (request, response) => {
-  Note.find({}).then(notes => {
-    response.json(notes)
-  })
+notesRouter.get('/', async (request, response) => {
+  // Note.find({}).then(notes => {
+  //   response.json(notes)
+  // })
+  const notes = await Note.find({})
+  response.json(notes)
+
 })
 
 // finding a note using id
@@ -28,20 +31,27 @@ notesRouter.get('/:id', (request, response, next) => {
 })
 
 // saving data to mongo database
-notesRouter.post('/', (request, response, next) => {
+notesRouter.post('/', async (request, response, next) => {
   const body = request.body
 
   const note = new Note({
     content: body.content,
     important: body.important || false,
-    date: new Date(),
-  })
 
-  note.save()
-    .then(savedNote => {
-      response.json(savedNote)
-    })
-    .catch(error => next(error))
+  })
+  try {
+    // note.save()
+    //   .then(savedNote => {
+    //     // we return 201 status for crating status code
+    //     response.status(201).json(savedNote)
+    //   })
+    //   .catch(error => next(error))
+    const savedNote = await note.save()
+    response.status(201).json(savedNote)
+  } catch (exception){
+    next(exception)
+    /* The catch block simply calls the next function, which passes the request handling to the error handling middleware.*/
+  }
 })
 
 // delete specific note by finding with id
