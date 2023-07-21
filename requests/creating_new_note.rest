@@ -2,6 +2,29 @@ POST http://localhost:3001/api/notes
 Content-Type: application/json
 
 {
-  "content": "Ensure that everything still works",
-  "important": true
+  "content": "Ensure that everything still works in part c User Admin",
+  "important": true,
+  "userId": "64ba91367f622e7d2b0b0cb4"
 }
+###
+POST http://localhost:3001/api/users 
+Content-Type: application/json
+
+{
+    "username": "something",
+    "name": "Helloworld",
+    "password": "diffpassword"
+}
+
+###
+
+POST http://localhost:3001/api/notes 
+Content-Type: application/json
+
+{
+  "content": "C++ workout",
+  "important": false,
+  "userId": "64ba91367f622e7d2b0b0cb4"
+}
+
+

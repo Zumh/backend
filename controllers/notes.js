@@ -6,12 +6,11 @@
  */
 const notesRouter = require('express').Router()
 const Note = require('../models/note')
+const User = require('../models/user')
 
 // get all the notes and response them to the frontend
 notesRouter.get('/', async (request, response) => {
-  // Note.find({}).then(notes => {
-  //   response.json(notes)
-  // })
+
   const notes = await Note.find({})
   response.json(notes)
 
@@ -35,16 +34,31 @@ notesRouter.get('/:id',  async (request, response) => {
 // saving data to mongo database
 notesRouter.post('/', async (request, response) => {
   const body = request.body
+ 
+  // find the user base on their id
+  const user = await User.findById(body.userId)
 
+  // create a new note with user id as a reference
   const note = new Note({
     content: body.content,
-    important: body.important || false,
+    important: body.important === undefined ? false : body.important,
+
+    user: user.id
 
   })
 
 
   const savedNote = await note.save()
-  response.status(201).json(savedNote)
+
+  // also we extract and concatenate the note id to user object
+  // assign all the notes object to user.notes
+  user.notes = user.notes.concat(savedNote._id)
+  // we saved the user with the note and id
+  await user.save()
+
+  // we only return savedNote
+  response.json(savedNote)
+  //response.status(201).json(savedNote)
 
 })
 
@@ -61,17 +75,20 @@ notesRouter.delete('/:id', async (request, response) => {
 
 // find the note using id and update info
 notesRouter.put('/:id', (request, response, next) => {
-  const { content, important } = request.body
+  const body = request.body
 
-  Note.findByIdAndUpdate(
-    request.params.id,
-    { content, important },
-    { new: true, runValidators: true, context: 'query' }
-  )
+  const note = {
+    content: body.content,
+    important: body.important,
+  }
+
+  Note.findByIdAndUpdate(request.params.id, note, { new: true })
     .then(updatedNote => {
       response.json(updatedNote)
     })
     .catch(error => next(error))
 })
+
+
 
 module.exports = notesRouter

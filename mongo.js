@@ -8,9 +8,9 @@ if (process.argv.length<3) {
 const password = process.argv[2]
 
 const url =
-  `mongodb+srv://fullstack:${password}@cluster0.o1opl.mongodb.net/testNoteApp?retryWrites=true&w=majority`
-
+  `mongodb+srv://fullstack2023:${password}@cluster0.8vki2oh.mongodb.net/testNoteApp?retryWrites=true&w=majority`
 mongoose.set('strictQuery',false)
+
 mongoose.connect(url)
 
 const noteSchema = new mongoose.Schema({
@@ -20,7 +20,6 @@ const noteSchema = new mongoose.Schema({
 })
 
 const Note = mongoose.model('notes', noteSchema)
-
 const note = new Note({
   content: 'Mongoose makes things easy',
   date: new Date(),
@@ -28,7 +27,9 @@ const note = new Note({
 })
 
 
-note.save().then(result => {
+note.save().then(() => {
+  console.log("good")
+
   console.log('note saved!')
   mongoose.connection.close()
 })  
