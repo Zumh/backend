@@ -19,7 +19,7 @@ const Note = require('../models/note')
 
 describe('when there is initially some notes saved', () => {
   // In other words, supertest takes care that the application being tested is started at the port that it uses internally.
-  
+
   beforeEach(async () => {
     await Note.deleteMany({})
     await Note.insertMany(helper.initialNotes)

@@ -21,7 +21,14 @@ usersRouter.post('/', async (request, response) => {
 
 // Router handler that returns all of the users in the database
 usersRouter.get('/', async (request, response) => {
-  const users = await User.find({})
+  // join query can be done with populate
+  // we are now joining all the notes to users data
+  // In addition to the field id:n we are now only interested in content and important.
+  const users = await User
+  // { content: 1, important: 1} means show content and important
+    .find({}).populate('notes', { content: 1, important: 1 })
+  //.find({}).populate('notes')
+
   response.json(users)
 })
 

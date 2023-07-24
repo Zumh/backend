@@ -7,11 +7,14 @@
 const notesRouter = require('express').Router()
 const Note = require('../models/note')
 const User = require('../models/user')
+const jwt = require('jsonwebtoken')
 
 // get all the notes and response them to the frontend
 notesRouter.get('/', async (request, response) => {
 
-  const notes = await Note.find({})
+  const notes = await Note
+  // show only username and name
+    .find({}).populate('user', { username: 1, name: 1 })
   response.json(notes)
 
 })
@@ -31,23 +34,49 @@ notesRouter.get('/:id',  async (request, response) => {
 
 })
 
+// extract token from authorization header
+const getTokenFrom = request => {
+  // isolates the token from the authorization header.
+  const authorization = request.get('authorization')
+  if (authorization && authorization.startsWith('Bearer ')) {
+    // we eliminate Bearer with empty string
+    // so that we get only the token string
+
+    return authorization.replace('Bearer ', '')
+  }
+  return null
+}
+
 // saving data to mongo database
 notesRouter.post('/', async (request, response) => {
   const body = request.body
- 
+  
   // find the user base on their id
-  const user = await User.findById(body.userId)
+  //const user = await User.findById(body.userId)
+  // jwt.verify made sure the SECRET and current token from authorization is the same
+  const decodedToken = jwt.verify(getTokenFrom(request), process.env.SECRET)
+  
+  if (!decodedToken.id) {
+    // if they match then return a status code of 401 and error message
+    return response.status(401).json({ error: 'token invalid' })
+  }
 
+  // we find the user using decoded token's id
+  // we return that user object
+  const user = await User.findById(decodedToken.id)
+  
   // create a new note with user id as a reference
   const note = new Note({
     content: body.content,
     important: body.important === undefined ? false : body.important,
-
-    user: user.id
+    // we assign user id to current note
+    // like reference
+    user: user._id
 
   })
 
-
+  // update the note
+  // we saved the note to database and return that saved note
   const savedNote = await note.save()
 
   // also we extract and concatenate the note id to user object
